@@ -7,12 +7,19 @@ sudo dpkg -i libssl1.1_1.1.0g-2ubuntu4_arm64.deb
 rm libssl1.1_1.1.0g-2ubuntu4_arm64.deb
 mkdir ~/ccminer
 cd ~/ccminer
-GITHUB_RELEASE_JSON=$(curl --silent "https://api.github.com/repos/Oink70/CCminer-ARM-optimized/releases?per_page=1" | jq -c '[.[] | del (.body)]')
-GITHUB_DOWNLOAD_URL=$(echo $GITHUB_RELEASE_JSON | jq -r ".[0].assets[0].browser_download_url")
-GITHUB_DOWNLOAD_NAME=$(echo $GITHUB_RELEASE_JSON | jq -r ".[0].assets[0].name")
+# Ambil JSON rilis terbaru dan hapus isi 'body'
+GITHUB_RELEASE_JSON=$(curl --silent "https://api.github.com/repos/Oink70/CCminer-ARM-optimized/releases?per_page=1" | jq -c '[.[] | del(.body)]')
 
-echo "Downloading latest release: $GITHUB_DOWNLOAD_NAME"
+# Ambil URL unduhan dari asset yang cocok
+DOWNLOAD_URL=$(echo "$GITHUB_RELEASE_JSON" | jq -r '.[0].assets[] | select(.name | test("ARM$")) | .browser_download_url')
 
+# Unduh jika URL ditemukan
+if [[ -n "$DOWNLOAD_URL" ]]; then
+  echo "Downloading latest release:"
+  wget "$DOWNLOAD_URL"
+else
+  echo "Download URL not found."
+fi
 wget ${GITHUB_DOWNLOAD_URL} -O ~/ccminer/ccminer
 wget https://raw.githubusercontent.com/deBosya/VerusARM/main/config.json -O ~/ccminer/config.json
 chmod +x ~/ccminer/ccminer
